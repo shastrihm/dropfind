@@ -2,7 +2,7 @@
 A deep learning model to detect the center of drops trained with the Tensorflow2 object detection API. Special purpose inference script provided. 
 ## Requirements
 - Windows OS 
-- Python 3.6
+- Python 3.6 (may work with newer Python versions, but this has not been tested)
 - Internet connection
 ## How to install
 1) Download and install Python 3.6. There are many ways to do this. The most straightforward way may be to download the installer by clicking [here](https://www.python.org/ftp/python/3.6.2/python-3.6.2-amd64.exe). Open it and follow the on screen instructions until it says the installation is successfull. 
