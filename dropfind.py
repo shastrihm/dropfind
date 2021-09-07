@@ -1,16 +1,19 @@
 """
 dropfind.py
-
+- Hrishee Shastri
+- September 2021
 input : no. of ims and path to directory
 starting scan in this directory
     - monitoring loop of that directory
-        - if new image found, infer and write to csv file (open, write, close)
-    - output: csv file into same directory (open, write, close)
+        - if new image found, infer and write to csv file
+    - output: csv file into same directory
         image name, coordinates of center
 """
 
 
 import os # importing OS in order to make GPU visible
+import shutil 
+import argparse
 import tensorflow as tf 
 import numpy as np
 from PIL import Image
@@ -29,6 +32,8 @@ from object_detection.utils import label_map_util
 from object_detection.utils import config_util
 from object_detection.utils import visualization_utils as viz_utils
 from object_detection.builders import model_builder
+
+
 
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID" # do not change anything in here
@@ -259,6 +264,14 @@ class Watcher:
         event_handler = Handler()
         self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
         self.observer.start()
+        
+        if test_mode:
+            print("TESTING INSTALLATION")
+            source = "test_install\\"
+            target = "test_install\\test\\"
+            for fname in os.listdir(source):
+                if fname[-4:] == ".jpg":
+                    shutil.move(os.path.join(source, fname), target)
         try:
             while True:
                 global COUNT 
@@ -268,6 +281,24 @@ class Watcher:
         except:
             self.observer.stop()
             print("Quitting...")
+            if test_mode:
+                print("CLEANING UP TESTBED")
+                target = "test_install\\"
+                source = "test_install\\test\\"
+                for fname in os.listdir(source):
+                    if fname[-4:] == ".jpg":
+                        shutil.move(os.path.join(source, fname), target)
+
+                # Validating output csv file
+                assert "results.csv" in os.listdir(source), "results.csv not found"
+                file = open(source + os.sep + "results.csv")
+                reader = csv.reader(file)
+                assert len(list(reader)) == NUM_IMS, "results.csv has incorrect no. of rows"
+                file.close()
+                os.remove(source + os.sep + "results.csv")
+
+                print()
+                print("Test passed. Installation Successful.")
 
         self.observer.join()
 
@@ -288,20 +319,25 @@ class Handler(FileSystemEventHandler):
                 print("Done - %s." % tail)
                 if COUNT == NUM_IMS:
                     print(str(COUNT) + " images done")
+                    sys.exit(0)
+                    
+
+                    
+
            
 if __name__ == "__main__":
-    print()
-    print("You must run this script from the current directory") 
-    print("Usage: python dropfind.py \"PATH\" N")
-    print("Where PATH is the full path to the directory that will be populated with images")
-    print("And where N is the number of images to be processed")
-    print()
-    print("Script will output a csv file results.csv within the directory specified by PATH")
-    assert(len(sys.argv) == 3)
-    dir_path = sys.argv[1]
-    NUM_IMS = int(sys.argv[2])
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--path", help="Path to directory to be populated with images, and where results.csv will go")
+    parser.add_argument("-n", "--num_ims", help="Number of images expected", type=int)
+    parser.add_argument("-t", "--test", default=False, help="Set True if testing installation, Set False for regular use", type=bool)
+
+    args = parser.parse_args()
+    dir_path = args.path 
+    NUM_IMS = args.num_ims
+    test_mode = args.test
     print()
     print("Ready for inference...")
     w = Watcher(dir_path, NUM_IMS)
     w.run()
+
 
