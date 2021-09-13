@@ -241,24 +241,22 @@ def dropfind(dir_path, image):
     image : (str) filename of image
     dir_path : (str) full path of directory where images are being populated
     
-    creates and writes to a csv file "results.csv" with two rows:
+    creates and writes to a csv file "temp.csv" with two rows:
         image file name | (x,y) coordinates of inferred drop center
     """
-    with open(dir_path + os.sep + "results.csv", "a", newline='') as f:
+    with open(dir_path + os.sep + "temp.csv", "a", newline='') as f:
         writer = csv.writer(f)
         writer.writerow([image, center_coords(dir_path + os.sep + image)])
-
-
 
 
 COUNT = 0
 
 class Watcher:
-    def __init__(self, directory, num_ims):
+    def __init__(self, directory, num_ims, barcode):
         self.observer = Observer()
         self.DIRECTORY_TO_WATCH = directory
         self.n = num_ims
-        self.count = 0
+        self.barcode = barcode
 
     def run(self):
         event_handler = Handler()
@@ -275,12 +273,16 @@ class Watcher:
         try:
             while True:
                 global COUNT 
-                if COUNT == NUM_IMS:
+                if COUNT == self.n:
                     sys.exit(0)
                 time.sleep(5)
         except:
             self.observer.stop()
             print("Quitting...")
+
+            new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
+            os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
+
             if test_mode:
                 print("CLEANING UP TESTBED")
                 target = "test_install\\"
@@ -290,12 +292,13 @@ class Watcher:
                         shutil.move(os.path.join(source, fname), target)
 
                 # Validating output csv file
-                assert "results.csv" in os.listdir(source), "results.csv not found"
-                file = open(source + os.sep + "results.csv")
+                fname = self.barcode + ".csv"
+                assert fname in os.listdir(source), fname + " not found"
+                file = open(source + os.sep + fname)
                 reader = csv.reader(file)
-                assert len(list(reader)) == NUM_IMS, "results.csv has incorrect no. of rows"
+                assert len(list(reader)) == NUM_IMS,  fname + " has incorrect no. of rows"
                 file.close()
-                os.remove(source + os.sep + "results.csv")
+                os.remove(source + os.sep + fname)
 
                 print()
                 print("Test passed. Installation Successful.")
@@ -311,7 +314,7 @@ class Handler(FileSystemEventHandler):
 
         elif event.event_type == 'created':
             head, tail = os.path.split(event.src_path)
-            if tail != "results.csv":
+            if ".csv" not in tail:
                 global COUNT
                 COUNT += 1
                 dropfind(head, tail)
@@ -329,15 +332,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to directory to be populated with images, and where results.csv will go")
     parser.add_argument("-n", "--num_ims", help="Number of images expected", type=int)
+    parser.add_argument("-b", "--barcode", default=False, help="Barcode for the batch of images", type=str)
     parser.add_argument("-t", "--test", default=False, help="Set True if testing installation, Set False for regular use", type=bool)
 
     args = parser.parse_args()
     dir_path = args.path 
     NUM_IMS = args.num_ims
     test_mode = args.test
+    barcode = args.barcode
+
     print()
     print("Ready for inference...")
-    w = Watcher(dir_path, NUM_IMS)
+    w = Watcher(dir_path, NUM_IMS, barcode)
     w.run()
 
 
