@@ -7,8 +7,9 @@ A deep learning model to detect the center of drops trained with the Tensorflow2
 ## How to install
 1) Download and install Python 3.6. There are many ways to do this. The most straightforward way may be to download the installer by clicking [here](https://www.python.org/ftp/python/3.6.2/python-3.6.2-amd64.exe). Open it and follow the on screen instructions until it says the installation is successfull. 
     - After installing, running `python` in the command line may not work. If this is the case, you may need to add Python to your environment variables. To do this, rerun the installer and select **Modify -> Next**, then check the box that says "Add Python to environment variables", and then click Install.
-2) Clone this repository to your machine, either via `git clone https://github.com/shastrihm/dropfind.git`  in Git Bash or by downloading and unzipping the zip file. 
-3) In the command line, from the directory that you cloned it to, run `setup.bat`. This should install all the required dependencies for running the inference script.
+2) Download and install Microsoft Visual Studio [here](https://c2rsetup.officeapps.live.com/c2r/downloadVS.aspx?sku=community&channel=release&source=vslandingpage&cid=2011) if you don't already have a copy installed. When following the installer instructions, select "Desktop development with C++" as a workload to install. 
+3) Clone this repository to your machine, either via `git clone https://github.com/shastrihm/dropfind.git`  in Git Bash or by downloading and unzipping the zip file. 
+4) In the command line, from the directory that you cloned it to, run `setup.bat`. This should install all the required dependencies for running the inference script.
 
 ## Testing your installation
 
