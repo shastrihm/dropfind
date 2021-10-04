@@ -2,5 +2,5 @@ When testing the installation, the test script will
 1) Init dropfind.py to listen to this directory
 2) Move the images from the parent directory to this directory
 3) Let dropfind.py operate on the images as they come in
-4) Check the resulting results.csv file
-5) Delete the results.csv file and move all images back to the parent directory
+4) Check the resulting csv file
+5) Delete the csv file and move all images back to the parent directory
