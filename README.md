@@ -20,15 +20,17 @@ Run `test.bat` from the directory you cloned the repo to and wait for it to comp
 will be printed to the console. 
 
 ## Usage 
-Note : Ignore Tensorflow GPU warnings unless you want to perform inference on a GPU. Also, images must be at square resolution to be fed into the model.
+Note : Tensorflow GPU warnings are suppressed. Unsuppress them by commenting out the `logging.getLogger('tensorflow').setLevel(logging.FATAL)` at the beggining of `dropfind.py`.
 
-The `dropfind.py` script takes the following command line arguments, in order:
+The `dropfind.py` script takes the following command line arguments
 1) `-p` (str): The absolute or relative path to the directory that will be populated with images (wrap this in double quotes to avoid escape character '\' shenanigans)
 2) `-n` (int): The number of images that will populate the directory
 3) `-b` (str): The barcode of the batch of images that will populate the directory. This dictates the resulting filename of the output csv file.
+4) `-m` (bool): Whether or not to suppress all console output. Defaults to True if not specified.
+5) `-t` (bool): Whether or not to operate in test mode. Defaults to False. Should only be true in `test.bat`.
 
-E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597"`
-- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console, it will perform inference on each image **as it enters** the directory (so files already in the directory will be ignored, and all incoming files must be .jpg or .png), writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
+E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
+- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console (which it will not print if `-m` is False), it will perform inference on each image **as it enters** the directory (so files already in the directory will be ignored, and all incoming files must be .jpg or .png), writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
 
 `C:\Path\To\Images\J000597.csv`
      

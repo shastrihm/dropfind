@@ -10,8 +10,11 @@ starting scan in this directory
         image name, coordinates of center
 """
 
+import logging
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
+logging.getLogger('tensorflow').setLevel(logging.FATAL)
 
-import os # importing OS in order to make GPU visible
 import shutil 
 import argparse
 import tensorflow as tf 
@@ -326,24 +329,39 @@ class Handler(FileSystemEventHandler):
                     
 
                     
+class HiddenPrints:
+    def __enter__(self):
+        self._original_stdout = sys.stdout
+        sys.stdout = open(os.devnull, 'w')
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        sys.stdout.close()
+        sys.stdout = self._original_stdout
+
+def run(dir_path, NUM_IMS, barcode):
+    print()
+    print("Ready for inference...")
+    w = Watcher(dir_path, NUM_IMS, barcode)
+    w.run()
            
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to directory to be populated with images, and where results.csv will go")
     parser.add_argument("-n", "--num_ims", help="Number of images expected", type=int)
     parser.add_argument("-b", "--barcode", default=False, help="Barcode for the batch of images", type=str)
-    parser.add_argument("-t", "--test", default=False, help="Set True if testing installation, Set False for regular use", type=bool)
-
+    parser.add_argument("-m", "--mute", default=True, help="Set True to suppress all output (print statements)", type=lambda x: (str(x).lower() == 'true'))
+    parser.add_argument("-t", '--test', default=False, help="Set True for testing mode, False else", type=lambda x: (str(x).lower() == 'true'))
     args = parser.parse_args()
     dir_path = args.path 
     NUM_IMS = args.num_ims
-    test_mode = args.test
     barcode = args.barcode
-
-    print()
-    print("Ready for inference...")
-    w = Watcher(dir_path, NUM_IMS, barcode)
-    w.run()
+    mute = args.mute
+    test_mode = args.test
+    
+    if mute:
+        with HiddenPrints():
+            run(dir_path, NUM_IMS, barcode)
+    else:
+        run(dir_path, NUM_IMS, barcode)
 
 
