@@ -23,7 +23,7 @@ will be printed to the console.
 Note : Tensorflow GPU warnings are suppressed. Unsuppress them by commenting out the `logging.getLogger('tensorflow').setLevel(logging.FATAL)` at the beggining of `dropfind.py`.
 
 The `dropfind.py` script takes the following command line arguments
-1) `-p` (str): The absolute or relative path to the directory that will be populated with images (wrap this in double quotes to avoid escape character '\' shenanigans)
+1) `-p` (str): The absolute or relative path to the directory that will be populated with images (wrap this in quotes if your path contains a space. If applicable, make sure to use `\\` in place of `\` to avoid escape character shenanigans)
 2) `-n` (int): The number of images that will populate the directory
 3) `-b` (str): The barcode of the batch of images that will populate the directory. This dictates the resulting filename of the output csv file.
 4) `-m` (bool): Whether or not to suppress all console output. Defaults to True if not specified.
