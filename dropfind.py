@@ -19,6 +19,7 @@ import shutil
 import argparse
 import tensorflow as tf 
 import numpy as np
+import PIL
 from PIL import Image
 from tqdm import tqdm
 import csv 
@@ -217,7 +218,11 @@ def center_coords(image_path):
             highest confidence
             If no drop identified, returns the center of the image by default
     """
-    im = Image.open(image_path)
+    try:
+        im = Image.open(image_path)
+    except PIL.UnidentifiedImageError:
+        im = Image.open(image_path)
+        print("Originally error, Tried again and it worked")
     X_DIM, Y_DIM = im.size
     detections = inference_as_raw_output(image_path)
     boxes = detections['detection_boxes']
@@ -235,9 +240,8 @@ def center_coords(image_path):
     x1 = box[1]*X_DIM
     y2 = box[2]*Y_DIM
     x2 = box[3]*X_DIM
-
-    return (x1 + (x2 - x1)//2, y1 + (y2 - y1)//2)
-
+    result = (round(x1 + (x2 - x1)//2, 3), round(y1 + (y2 - y1)//2, 3))
+    return result
 
 def dropfind(dir_path, image):
     """
@@ -253,6 +257,7 @@ def dropfind(dir_path, image):
 
 
 COUNT = 0
+BEFORE_LOOP_IMS = []
 
 class Watcher:
     def __init__(self, directory, num_ims, barcode):
@@ -262,11 +267,13 @@ class Watcher:
         self.barcode = barcode
 
     def run(self):
+        global COUNT
         event_handler = Handler()
         self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
         self.observer.start()
         
         if test_mode:
+            self.start = time.time()
             print("TESTING INSTALLATION")
             source = "test_install\\"
             target = "test_install\\test\\"
@@ -275,18 +282,24 @@ class Watcher:
                     shutil.move(os.path.join(source, fname), target)
         try:
             while True:
-                global COUNT 
                 if COUNT == self.n:
                     sys.exit(0)
-                time.sleep(5)
+                time.sleep(2)
         except:
             self.observer.stop()
-            print("Quitting...")
-
+            global BEFORE_LOOP_IMS
+            for f in BEFORE_LOOP_IMS:
+                if ".jpg" in f:
+                    COUNT += 1
+                    dropfind(self.DIRECTORY_TO_WATCH, f)
+                    print(COUNT, " - Done - %s." % f)
+            print("Quitting...")    
             new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
             os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
 
             if test_mode:
+                self.end = time.time()
+                print(self.end - self.start)
                 print("CLEANING UP TESTBED")
                 target = "test_install\\"
                 source = "test_install\\test\\"
@@ -314,15 +327,15 @@ class Handler(FileSystemEventHandler):
     def on_any_event(event):
         if event.is_directory:
             return None
-
+        
         elif event.event_type == 'created':
             head, tail = os.path.split(event.src_path)
-            if ".csv" not in tail:
+            if ".jpg" in tail and head == dir_path:
                 global COUNT
                 COUNT += 1
                 dropfind(head, tail)
                 # Take any action here when a file is first created.
-                print("Done - %s." % tail)
+                print(COUNT, " - Done - %s." % tail)
                 if COUNT == NUM_IMS:
                     print(str(COUNT) + " images done")
                     sys.exit(0)
@@ -341,9 +354,21 @@ class HiddenPrints:
 def run(dir_path, NUM_IMS, barcode):
     print()
     print("Ready for inference...")
-    w = Watcher(dir_path, NUM_IMS, barcode)
+    global BEFORE_LOOP_IMS
+    BEFORE_LOOP_IMS = os.listdir(dir_path)
+    atstart = len([x for x in BEFORE_LOOP_IMS if '.jpg' in x])
+    w = Watcher(dir_path, NUM_IMS - atstart, barcode)
     w.run()
-           
+    
+    
+
+def dir_created(dir_path):
+    try:
+        os.listdir(dir_path)
+        return True
+    except FileNotFoundError:
+        return False
+    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to directory to be populated with images, and where results.csv will go")
@@ -357,6 +382,11 @@ if __name__ == "__main__":
     barcode = args.barcode
     mute = args.mute
     test_mode = args.test
+
+    while not dir_created(dir_path):
+        if not mute:
+            print("Waiting for path " + dir_path + " to be created...")
+        time.sleep(5)
     
     if mute:
         with HiddenPrints():
