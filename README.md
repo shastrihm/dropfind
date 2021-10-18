@@ -1,5 +1,5 @@
 # Object detection for crystallization drops
-A deep learning model to detect the center of drops trained with the Tensorflow2 object detection API. Special purpose inference script provided. 
+A deep learning model to detect the center of drops trained with the Tensorflow2 object detection API. Special purpose inference script provided for LabVIEW integration. 
 ## Requirements
 - Windows OS 
 - Python 3.6 (may work with newer Python versions, but this has not been tested)
@@ -30,7 +30,7 @@ The `dropfind.py` script takes the following command line arguments
 5) `-t` (bool): Whether or not to operate in test mode. Defaults to False. Should only be true in `test.bat`.
 
 E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
-- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console (which it will not print if `-m` is False), it will perform inference on each image as it enters the directory, writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
+- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console (which it will not print if `-m` is False), it will perform inference on each image as it enters the directory, writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate, acknowledging its termination by saving a file named `exit.txt` in the directory. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
 
 `C:\Path\To\Images\J000597.csv`
      
@@ -38,7 +38,10 @@ E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
 |------------|------------------------------------------------------|
 | . . .      | . . .                                                |
 | image42.jpg | (x,y) coordinates of inferred drop center for image42 |      
-          
+
+
+### Quitting dropfind prematurely
+There may be cases where you want to terminate the program prematurely (i.e. before `-n` images have been processed) and cannot interrupt via the command line. To solve this, the script will monitor the directory specified by `-p` for a file named `stop.txt`. If `stop.txt` is detected, the script will terminate even if it is expecting more images. An acknowledgement `exit.txt` will be saved to the same directory so the user can verify that the script terminated. Note that directory is not deleted, so that must be handled by the user. 
 
 
 

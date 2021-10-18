@@ -258,6 +258,7 @@ def dropfind(dir_path, image):
 
 COUNT = 0
 BEFORE_LOOP_IMS = []
+STOPFLAG = False
 
 class Watcher:
     def __init__(self, directory, num_ims, barcode):
@@ -268,8 +269,9 @@ class Watcher:
 
     def run(self):
         global COUNT
+        global STOPFLAG
         event_handler = Handler()
-        self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=True)
+        self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=False)
         self.observer.start()
         
         if test_mode:
@@ -282,20 +284,21 @@ class Watcher:
                     shutil.move(os.path.join(source, fname), target)
         try:
             while True:
-                if COUNT == self.n:
+                if COUNT == self.n or STOPFLAG:
                     sys.exit(0)
                 time.sleep(2)
         except:
             self.observer.stop()
-            global BEFORE_LOOP_IMS
-            for f in BEFORE_LOOP_IMS:
-                if ".jpg" in f:
-                    COUNT += 1
-                    dropfind(self.DIRECTORY_TO_WATCH, f)
-                    print(COUNT, " - Done - %s." % f)
-            print("Quitting...")    
-            new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
-            os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
+            if not STOPFLAG:
+                global BEFORE_LOOP_IMS
+                for f in BEFORE_LOOP_IMS:
+                    if ".jpg" in f:
+                        COUNT += 1
+                        dropfind(self.DIRECTORY_TO_WATCH, f)
+                        print(COUNT, " - Done - %s." % f)
+                print("Quitting...")    
+                new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
+                os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
 
             if test_mode:
                 self.end = time.time()
@@ -325,20 +328,21 @@ class Watcher:
 class Handler(FileSystemEventHandler):
     @staticmethod
     def on_any_event(event):
+        global COUNT
+        global STOPFLAG
         if event.is_directory:
             return None
-        
         elif event.event_type == 'created':
             head, tail = os.path.split(event.src_path)
-            if ".jpg" in tail and head == dir_path:
-                global COUNT
+            if tail == "stop.txt":
+                STOPFLAG = True
+                print("User quitting prematurely...")
+            elif ".jpg" in tail and head == dir_path:
                 COUNT += 1
                 dropfind(head, tail)
                 # Take any action here when a file is first created.
                 print(COUNT, " - Done - %s." % tail)
-                if COUNT == NUM_IMS:
-                    print(str(COUNT) + " images done")
-                    sys.exit(0)
+
                     
 
                     
@@ -359,6 +363,10 @@ def run(dir_path, NUM_IMS, barcode):
     atstart = len([x for x in BEFORE_LOOP_IMS if '.jpg' in x])
     w = Watcher(dir_path, NUM_IMS - atstart, barcode)
     w.run()
+    if not test_mode:
+        with open(dir_path + os.sep + "exit.txt", 'a') as f:
+            f.write("exit acknowledgement")
+
     
     
 
@@ -394,4 +402,5 @@ if __name__ == "__main__":
     else:
         run(dir_path, NUM_IMS, barcode)
 
-
+    if not test_mode:
+        assert("exit.txt" in os.listdir(dir_path))
