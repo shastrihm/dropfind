@@ -20,8 +20,7 @@ Run `test.bat` from the directory you cloned the repo to and wait for it to comp
 will be printed to the console. 
 
 ## Updating
-
-
+If this GitHub repository is more up-to-date than your local repo, and you would like to update it: from the directory dropfind was cloned to, in GitBash, run the command `git pull origin main`
 
 ## Usage 
 Note : Tensorflow GPU warnings are suppressed. Unsuppress them by commenting out the `logging.getLogger('tensorflow').setLevel(logging.FATAL)` at the beggining of `dropfind.py`.
