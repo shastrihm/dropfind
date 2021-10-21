@@ -47,7 +47,7 @@ E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
 There may be cases where you want to terminate the program prematurely (i.e. before `-n` images have been processed) and cannot interrupt via the command line. To solve this, the script will monitor the directory specified by `-p` for a file named `stop.txt`. If `stop.txt` is detected, the script will terminate even if it is expecting more images. An acknowledgement `exit.txt` will be saved to the same directory so the user can verify that the script terminated. Note that directory is not deleted, so that must be handled by the user. 
 
 ### Logging
-To help debugging when console output is muted, dropfind will write logs to `dropfind_log.txt`. 
+To help debugging when console output is muted, dropfind will write logs to `dropfind_log.txt` within the dropfind directory (not the directory to be monitored). 
 Each time the script is executed with a given directory, number of images, and barcode, it will 
 write that information to `dropfind_log.txt` as well as all the images it performs inference on. 
 Each script execution will be demarcated by a line of dashes within the text file. To manage space, if `dropfind_log.txt`exceeds 500 lines on script execution, it will erase all of its contents.
