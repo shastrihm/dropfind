@@ -50,8 +50,8 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0" # TODO: specify your computational device
 
 
 # TODO: specify two pathes: to the pipeline.config file and to the folder with trained model.
-path2config ='themodel/pipeline.config'
-path2model = 'themodel/checkpoint'
+path2config ='themodel/v2/pipeline.config'
+path2model = 'themodel/v2/checkpoint'
 
 
 # do not change anything in this cell
@@ -62,9 +62,20 @@ detection_model = model_builder.build(model_config=model_config, is_training=Fal
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
 ckpt.restore(os.path.join(path2model, 'ckpt-0')).expect_partial()
 
-path2label_map = 'themodel/label_map.pbtxt' # TODO: provide a path to the label map file
+path2label_map = 'themodel/v2/label_map.pbtxt' # TODO: provide a path to the label map file
 category_index = label_map_util.create_category_index_from_labelmap(path2label_map,use_display_name=True)
 
+log_file = open("dropfind_log.txt", "a")
+num_lines = sum(1 for line in open("dropfind_log.txt"))
+if num_lines > 500:
+	log_file = open("dropfind_log.txt", "w")
+else:
+	log_file = open("dropfind_log.txt", "a")
+
+
+def print_console_and_file(string, file):
+	print(string)
+	print(string, file = file)
 
 def detect_fn(image):
     """
@@ -222,7 +233,7 @@ def center_coords(image_path):
         im = Image.open(image_path)
     except PIL.UnidentifiedImageError:
         im = Image.open(image_path)
-        print("Originally error, Tried again and it worked")
+        print_console_and_file("Originally PIL.UnidentifiedImageError, Tried again and it worked", file=log_file)
     X_DIM, Y_DIM = im.size
     detections = inference_as_raw_output(image_path)
     boxes = detections['detection_boxes']
@@ -276,7 +287,7 @@ class Watcher:
         
         if test_mode:
             self.start = time.time()
-            print("TESTING INSTALLATION")
+            print_console_and_file("TESTING INSTALLATION", file=log_file)
             source = "test_install\\"
             target = "test_install\\test\\"
             for fname in os.listdir(source):
@@ -295,15 +306,15 @@ class Watcher:
                     if ".jpg" in f:
                         COUNT += 1
                         dropfind(self.DIRECTORY_TO_WATCH, f)
-                        print(COUNT, " - Done - %s." % f)
-                print("Quitting...")    
+                        print_console_and_file(str(COUNT) + " - Done - %s." % f, file=log_file)
+                print_console_and_file("Quitting...", file=log_file)    
                 new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
                 os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
 
             if test_mode:
                 self.end = time.time()
-                print(self.end - self.start)
-                print("CLEANING UP TESTBED")
+                print_console_and_file(str(self.end - self.start), file = log_file)
+                print_console_and_file("CLEANING UP TESTBED", file=log_file)
                 target = "test_install\\"
                 source = "test_install\\test\\"
                 for fname in os.listdir(source):
@@ -319,8 +330,7 @@ class Watcher:
                 file.close()
                 os.remove(source + os.sep + fname)
 
-                print()
-                print("Test passed. Installation Successful.")
+                print_console_and_file("Test passed. Installation Successful.", file=log_file)
 
         self.observer.join()
 
@@ -336,12 +346,12 @@ class Handler(FileSystemEventHandler):
             head, tail = os.path.split(event.src_path)
             if tail == "stop.txt":
                 STOPFLAG = True
-                print("User quitting prematurely...")
+                print_console_and_file("User quitting prematurely...", file=log_file)
             elif ".jpg" in tail and head == dir_path:
                 COUNT += 1
                 dropfind(head, tail)
                 # Take any action here when a file is first created.
-                print(COUNT, " - Done - %s." % tail)
+                print_console_and_file(str(COUNT) + " - Done - %s." % tail, file=log_file)
 
                     
 
@@ -357,7 +367,7 @@ class HiddenPrints:
 
 def run(dir_path, NUM_IMS, barcode):
     print()
-    print("Ready for inference...")
+    print_console_and_file("Ready for inference...", file=log_file)
     global BEFORE_LOOP_IMS
     BEFORE_LOOP_IMS = os.listdir(dir_path)
     atstart = len([x for x in BEFORE_LOOP_IMS if '.jpg' in x])
@@ -365,7 +375,7 @@ def run(dir_path, NUM_IMS, barcode):
     w.run()
     if not test_mode:
         with open(dir_path + os.sep + "exit.txt", 'a') as f:
-            f.write("exit acknowledgement")
+        	f.write("exit acknowledgement")
 
     
     
@@ -391,9 +401,14 @@ if __name__ == "__main__":
     mute = args.mute
     test_mode = args.test
 
+    log_file.write("Monitoring directory: " + dir_path + "\n")
+    log_file.write("Number of images expected: " + str(NUM_IMS) + "\n")
+    log_file.write("Barcode: " + barcode + "\n")
+
+
     while not dir_created(dir_path):
         if not mute:
-            print("Waiting for path " + dir_path + " to be created...")
+            print_console_and_file("Waiting for path " + dir_path + " to be created...", file=log_file)
         time.sleep(5)
     
     if mute:
@@ -402,5 +417,9 @@ if __name__ == "__main__":
     else:
         run(dir_path, NUM_IMS, barcode)
 
+    log_file.write("---------------------------" +"\n")
+    log_file.close()
     if not test_mode:
         assert("exit.txt" in os.listdir(dir_path))
+
+

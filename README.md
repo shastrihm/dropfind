@@ -19,6 +19,10 @@ Run `test.bat` from the directory you cloned the repo to and wait for it to comp
 
 will be printed to the console. 
 
+## Updating
+
+
+
 ## Usage 
 Note : Tensorflow GPU warnings are suppressed. Unsuppress them by commenting out the `logging.getLogger('tensorflow').setLevel(logging.FATAL)` at the beggining of `dropfind.py`.
 
@@ -30,7 +34,7 @@ The `dropfind.py` script takes the following command line arguments
 5) `-t` (bool): Whether or not to operate in test mode. Defaults to False. Should only be true in `test.bat`.
 
 E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
-- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console (which it will not print if `-m` is False), it will perform inference on each image as it enters the directory, writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate, acknowledging its termination by saving a file named `exit.txt` in the directory. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
+- The script will begin monitoring the directory `C:\Path\To\Images`. Once it prints `Ready for Inference...` to the console (you can check `dropfind_log.txt` for this if `-m` is True, see below), it will perform inference on each image as it enters the directory, writing data to a `temp.csv` file. After `42` images have been processed, the script will terminate, acknowledging its termination by saving a file named `exit.txt` in the directory. It will rename the `temp.csv` to `J000597.csv` in the same directory, with the drop center coords and filenames for each processed file: 
 
 `C:\Path\To\Images\J000597.csv`
      
@@ -42,6 +46,12 @@ E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
 
 ### Quitting dropfind prematurely
 There may be cases where you want to terminate the program prematurely (i.e. before `-n` images have been processed) and cannot interrupt via the command line. To solve this, the script will monitor the directory specified by `-p` for a file named `stop.txt`. If `stop.txt` is detected, the script will terminate even if it is expecting more images. An acknowledgement `exit.txt` will be saved to the same directory so the user can verify that the script terminated. Note that directory is not deleted, so that must be handled by the user. 
+
+### Logging
+To help debugging when console output is muted, dropfind will write logs to `dropfind_log.txt`. 
+Each time the script is executed with a given directory, number of images, and barcode, it will 
+write that information to `dropfind_log.txt` as well as all the images it performs inference on. 
+Each script execution will be demarcated by a line of dashes within the text file. To manage space, if `dropfind_log.txt`exceeds 500 lines on script execution, it will erase all of its contents.
 
 
 
