@@ -19,6 +19,7 @@ import csv
 import time
 from dir_watcher import DirWatcher
 import sys # importyng sys in order to access scripts located in a different folder
+import traceback
 
 path2scripts = 'research/' # TODO: provide pass to the research folder
 sys.path.insert(0, path2scripts) # making scripts in models/research available for import
@@ -283,51 +284,56 @@ if __name__ == "__main__":
     log_file.close()
 
     
+    try:
+        dirwait_timeout = 60
+        x = 0
+        dirwait_interval = 5
+        DIR_FOUND_FLAG = True
+        while DIR_FOUND_FLAG and not os.path.isdir(dir_path):
+            printcf("Waiting for directory " + dir_path + " to be created...")
+            time.sleep(dirwait_interval)
+            x += dirwait_interval
+            if x >= dirwait_timeout:
+                printcf("Timeout. Directory " + dir_path + " not found after " + str(dirwait_timeout) + " seconds. Quitting..." )
+                DIR_FOUND_FLAG = False
 
-    dirwait_timeout = 60
-    x = 0
-    dirwait_interval = 5
-    DIR_FOUND_FLAG = True
-    while DIR_FOUND_FLAG and not os.path.isdir(dir_path):
-        printcf("Waiting for directory " + dir_path + " to be created...")
-        time.sleep(dirwait_interval)
-        x += dirwait_interval
-        if x >= dirwait_timeout:
-            printcf("Timeout. Directory " + dir_path + " not found after " + str(dirwait_timeout) + " seconds. Quitting..." )
-            DIR_FOUND_FLAG = False
+        if DIR_FOUND_FLAG:
+            Watcher = DirWatcher(dir_path)
+            INTERVAL = 1 # interval (in seconds) between refreshing directory for new images
 
-    if DIR_FOUND_FLAG:
-        Watcher = DirWatcher(dir_path)
-        INTERVAL = 1 # interval (in seconds) between refreshing directory for new images
-
-        printcf("Directory " + dir_path + " found")
-        printcf("Ready for inference...")
-        n = 0
-        while Watcher.count() < NUM_IMS:
-            files = Watcher.refresh_dir()
-            if Watcher.is_stop():
-                printcf("stop.txt detected. Quitting prematurely...")
-                break
-            for f in files:
-                n += 1
-                dropfind(dir_path, f)
-                printcf(str(n) + " Done - " + f)
-            time.sleep(INTERVAL)
+            printcf("Directory " + dir_path + " found")
+            printcf("Ready for inference...")
+            n = 0
+            while Watcher.count() < NUM_IMS:
+                files = Watcher.refresh_dir()
+                if Watcher.is_stop():
+                    printcf("stop.txt detected. Quitting prematurely...")
+                    break
+                for f in files:
+                    n += 1
+                    dropfind(dir_path, f)
+                    printcf(str(n) + " Done - " + f)
+                time.sleep(INTERVAL)
 
 
-        new_fname = dir_path + os.sep + barcode + ".csv"
-        os.rename(dir_path + os.sep + "temp.csv", new_fname)
-        printcf("Renamed temp.csv to " + barcode + ".csv")
+            new_fname = dir_path + os.sep + barcode + ".csv"
+            os.rename(dir_path + os.sep + "temp.csv", new_fname)
+            printcf("Renamed temp.csv to " + barcode + ".csv")
 
-        with open(dir_path + os.sep + "exit.txt", 'w') as f:
-            f.write("exit acknowledgement")
-        printcf("Deposited exit.txt acknowledgement to " + dir_path)
+            with open(dir_path + os.sep + "exit.txt", 'w') as f:
+                f.write("exit acknowledgement")
+            printcf("Deposited exit.txt acknowledgement to " + dir_path)
 
-        Watcher.refresh_dir()
-        assert(Watcher.is_exit())
-        printcf("Quitting...")
+            Watcher.refresh_dir()
+            assert(Watcher.is_exit())
+            printcf("Quitting...")
 
-    with open("dropfind_log.txt", "a") as log_file:
-        log_file.write("---------------------------" +"\n")
+        with open("dropfind_log.txt", "a") as log_file:
+            log_file.write("---------------------------" +"\n")
+    except:
+        with open("dropfind_log.txt", "a") as logfile:
+            traceback.print_exc(file=logfile)
+            logfile.write("----------------------------" + "\n")
+        raise 
     
 
