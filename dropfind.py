@@ -1,13 +1,6 @@
 """
 dropfind.py
 - Hrishee Shastri
-- September 2021
-input : no. of ims and path to directory
-starting scan in this directory
-    - monitoring loop of that directory
-        - if new image found, infer and write to csv file
-    - output: csv file into same directory
-        image name, coordinates of center
 """
 
 import logging
@@ -24,8 +17,7 @@ from PIL import Image
 from tqdm import tqdm
 import csv 
 import time
-from watchdog.observers import Observer
-from watchdog.events import FileSystemEventHandler
+from dir_watcher import DirWatcher
 import sys # importyng sys in order to access scripts located in a different folder
 
 path2scripts = 'research/' # TODO: provide pass to the research folder
@@ -65,17 +57,6 @@ ckpt.restore(os.path.join(path2model, 'ckpt-0')).expect_partial()
 path2label_map = 'themodel/v2/label_map.pbtxt' # TODO: provide a path to the label map file
 category_index = label_map_util.create_category_index_from_labelmap(path2label_map,use_display_name=True)
 
-log_file = open("dropfind_log.txt", "a")
-num_lines = sum(1 for line in open("dropfind_log.txt"))
-if num_lines > 500:
-	log_file = open("dropfind_log.txt", "w")
-else:
-	log_file = open("dropfind_log.txt", "a")
-
-
-def print_console_and_file(string, file):
-	print(string)
-	print(string, file = file)
 
 def detect_fn(image):
     """
@@ -219,8 +200,6 @@ def inference_as_raw_output(image_path,
     return detections
          
 
-
-
 def center_coords(image_path):
     """
     image_path : (str) path to image for inference
@@ -229,11 +208,13 @@ def center_coords(image_path):
             highest confidence
             If no drop identified, returns the center of the image by default
     """
-    try:
-        im = Image.open(image_path)
-    except PIL.UnidentifiedImageError:
-        im = Image.open(image_path)
-        print_console_and_file("Originally PIL.UnidentifiedImageError, Tried again and it worked", file=log_file)
+    im = Image.open(image_path)
+    # try:
+    #     im = Image.open(image_path)
+    # except PIL.UnidentifiedImageError:
+    #     im = Image.open(image_path)
+    #     print_console_and_file("Originally PIL.UnidentifiedImageError, Tried again and it worked", file=log_file)
+
     X_DIM, Y_DIM = im.size
     detections = inference_as_raw_output(image_path)
     boxes = detections['detection_boxes']
@@ -266,160 +247,87 @@ def dropfind(dir_path, image):
         writer = csv.writer(f)
         writer.writerow([image, center_coords(dir_path + os.sep + image)])
 
+def print_console_and_file(string, file, mute):
+    if not mute:
+        print(string)
+    with open(file, 'a') as f:
+        f.write(string + "\n")
 
-COUNT = 0
-BEFORE_LOOP_IMS = []
-STOPFLAG = False
-
-class Watcher:
-    def __init__(self, directory, num_ims, barcode):
-        self.observer = Observer()
-        self.DIRECTORY_TO_WATCH = directory
-        self.n = num_ims
-        self.barcode = barcode
-
-    def run(self):
-        global COUNT
-        global STOPFLAG
-        event_handler = Handler()
-        self.observer.schedule(event_handler, self.DIRECTORY_TO_WATCH, recursive=False)
-        self.observer.start()
-        
-        if test_mode:
-            self.start = time.time()
-            print_console_and_file("TESTING INSTALLATION", file=log_file)
-            source = "test_install\\"
-            target = "test_install\\test\\"
-            for fname in os.listdir(source):
-                if fname[-4:] == ".jpg":
-                    shutil.move(os.path.join(source, fname), target)
-        try:
-            while True:
-                if COUNT == self.n or STOPFLAG:
-                    sys.exit(0)
-                time.sleep(2)
-        except:
-            self.observer.stop()
-            if not STOPFLAG:
-                global BEFORE_LOOP_IMS
-                for f in BEFORE_LOOP_IMS:
-                    if ".jpg" in f:
-                        COUNT += 1
-                        dropfind(self.DIRECTORY_TO_WATCH, f)
-                        print_console_and_file(str(COUNT) + " - Done - %s." % f, file=log_file)
-                print_console_and_file("Quitting...", file=log_file)    
-                new_fname = self.DIRECTORY_TO_WATCH + os.sep + self.barcode + ".csv"
-                os.rename(self.DIRECTORY_TO_WATCH + os.sep + "temp.csv", new_fname)
-
-            if test_mode:
-                self.end = time.time()
-                print_console_and_file(str(self.end - self.start), file = log_file)
-                print_console_and_file("CLEANING UP TESTBED", file=log_file)
-                target = "test_install\\"
-                source = "test_install\\test\\"
-                for fname in os.listdir(source):
-                    if fname[-4:] == ".jpg":
-                        shutil.move(os.path.join(source, fname), target)
-
-                # Validating output csv file
-                fname = self.barcode + ".csv"
-                assert fname in os.listdir(source), fname + " not found"
-                file = open(source + os.sep + fname)
-                reader = csv.reader(file)
-                assert len(list(reader)) == NUM_IMS,  fname + " has incorrect no. of rows"
-                file.close()
-                os.remove(source + os.sep + fname)
-
-                print_console_and_file("Test passed. Installation Successful.", file=log_file)
-
-        self.observer.join()
-
-
-class Handler(FileSystemEventHandler):
-    @staticmethod
-    def on_any_event(event):
-        global COUNT
-        global STOPFLAG
-        if event.is_directory:
-            return None
-        elif event.event_type == 'created':
-            head, tail = os.path.split(event.src_path)
-            if tail == "stop.txt":
-                STOPFLAG = True
-                print_console_and_file("User quitting prematurely...", file=log_file)
-            elif ".jpg" in tail and head == dir_path:
-                COUNT += 1
-                dropfind(head, tail)
-                # Take any action here when a file is first created.
-                print_console_and_file(str(COUNT) + " - Done - %s." % tail, file=log_file)
-
-                    
-
-                    
-class HiddenPrints:
-    def __enter__(self):
-        self._original_stdout = sys.stdout
-        sys.stdout = open(os.devnull, 'w')
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        sys.stdout.close()
-        sys.stdout = self._original_stdout
-
-def run(dir_path, NUM_IMS, barcode):
-    print()
-    print_console_and_file("Ready for inference...", file=log_file)
-    global BEFORE_LOOP_IMS
-    BEFORE_LOOP_IMS = os.listdir(dir_path)
-    atstart = len([x for x in BEFORE_LOOP_IMS if '.jpg' in x])
-    w = Watcher(dir_path, NUM_IMS - atstart, barcode)
-    w.run()
-    if not test_mode:
-        with open(dir_path + os.sep + "exit.txt", 'a') as f:
-        	f.write("exit acknowledgement")
-
-    
-    
-
-def dir_created(dir_path):
-    try:
-        os.listdir(dir_path)
-        return True
-    except FileNotFoundError:
-        return False
-    
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-p", "--path", help="Path to directory to be populated with images, and where results.csv will go")
     parser.add_argument("-n", "--num_ims", help="Number of images expected", type=int)
     parser.add_argument("-b", "--barcode", default=False, help="Barcode for the batch of images", type=str)
     parser.add_argument("-m", "--mute", default=True, help="Set True to suppress all output (print statements)", type=lambda x: (str(x).lower() == 'true'))
-    parser.add_argument("-t", '--test', default=False, help="Set True for testing mode, False else", type=lambda x: (str(x).lower() == 'true'))
     args = parser.parse_args()
     dir_path = args.path 
     NUM_IMS = args.num_ims
     barcode = args.barcode
     mute = args.mute
-    test_mode = args.test
 
+    printcf = lambda string : print_console_and_file(string, file = "dropfind_log.txt", mute = mute)
+
+    LOG_LIMIT = 500
+    log_file = open("dropfind_log.txt", "a")
+    num_lines = sum(1 for line in open("dropfind_log.txt"))
+    if num_lines > LOG_LIMIT:
+        log_file = open("dropfind_log.txt", "w")
+        printcf("dropfind_log.txt contains over " + str(LOG_LIMIT) + "lines. Clearing...")
+    else:
+        log_file = open("dropfind_log.txt", "a")
+    
     log_file.write("Monitoring directory: " + dir_path + "\n")
     log_file.write("Number of images expected: " + str(NUM_IMS) + "\n")
     log_file.write("Barcode: " + barcode + "\n")
 
-
-    while not dir_created(dir_path):
-        if not mute:
-            print_console_and_file("Waiting for path " + dir_path + " to be created...", file=log_file)
-        time.sleep(5)
-    
-    if mute:
-        with HiddenPrints():
-            run(dir_path, NUM_IMS, barcode)
-    else:
-        run(dir_path, NUM_IMS, barcode)
-
-    log_file.write("---------------------------" +"\n")
     log_file.close()
-    if not test_mode:
-        assert("exit.txt" in os.listdir(dir_path))
 
+    
+
+    dirwait_timeout = 60
+    x = 0
+    dirwait_interval = 5
+    DIR_FOUND_FLAG = True
+    while DIR_FOUND_FLAG and not os.path.isdir(dir_path):
+        printcf("Waiting for directory " + dir_path + " to be created...")
+        time.sleep(dirwait_interval)
+        x += dirwait_interval
+        if x >= dirwait_timeout:
+            printcf("Timeout. Directory " + dir_path + " not found after " + str(dirwait_timeout) + " seconds. Quitting..." )
+            DIR_FOUND_FLAG = False
+
+    if DIR_FOUND_FLAG:
+        Watcher = DirWatcher(dir_path)
+        INTERVAL = 1 # interval (in seconds) between refreshing directory for new images
+
+        printcf("Directory " + dir_path + " found")
+        printcf("Ready for inference...")
+        n = 0
+        while Watcher.count() < NUM_IMS:
+            files = Watcher.refresh_dir()
+            if Watcher.is_stop():
+                printcf("stop.txt detected. Quitting prematurely...")
+                break
+            for f in files:
+                n += 1
+                dropfind(dir_path, f)
+                printcf(str(n) + " Done - " + f)
+            time.sleep(INTERVAL)
+
+
+        new_fname = dir_path + os.sep + barcode + ".csv"
+        os.rename(dir_path + os.sep + "temp.csv", new_fname)
+        printcf("Renamed temp.csv to " + barcode + ".csv")
+
+        with open(dir_path + os.sep + "exit.txt", 'w') as f:
+            f.write("exit acknowledgement")
+        printcf("Deposited exit.txt acknowledgement to " + dir_path)
+
+        Watcher.refresh_dir()
+        assert(Watcher.is_exit())
+        printcf("Quitting...")
+
+    with open("dropfind_log.txt", "a") as log_file:
+        log_file.write("---------------------------" +"\n")
+    
 
