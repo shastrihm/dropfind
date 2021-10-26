@@ -1,10 +1,12 @@
 # Object detection for crystallization drops
 Real time inference for a drop center detecting deep learning model trained with the Tensorflow2 object detection API. 
+Made for LabVIEW integration on Windows. 
 
 ## Requirements
 - Windows OS 
 - Python 3.6 (may work with newer Python versions, but this has not been tested)
 - Internet connection
+- Git Bash (for git commands. Not necessary but makes things a lot easier.)
 
 ## How to install
 1) Download and install Python 3.6. There are many ways to do this. The most straightforward way may be to download the installer by clicking [here](https://www.python.org/ftp/python/3.6.2/python-3.6.2-amd64.exe). Open it and follow the on screen instructions until it says the installation is successfull. 
@@ -18,7 +20,8 @@ Real time inference for a drop center detecting deep learning model trained with
 Run `test.bat` from the directory you cloned the repo to and wait for it to complete. It may take a few minutes. If the installation was successful, no errors will be thrown and the message `Test passed` will be printed to the console for each test. As well as testing basic installation, the testing suite (implemented in `dropfind_tests.py`) verifies correct behavior from dropfind in various deployment scenarios.
 
 ## Updating
-If this GitHub repository is more up-to-date than your local repo, and you would like to update it: from the directory where you cloned this repo to, run the command `git pull origin main` in Git Bash. (If you are familiar with git then you may know there are several ways of updating a local repo from a remote one, some better than others -- this is just one simple way.)
+If this GitHub repository is more up-to-date than your local repo, and you would like to update it: from the directory where you cloned this repo to, run the command `sh update.sh` in **Git Bash** (not Windows command line, unless you have taken special steps to ensure you can run shell scripts from the windows command line). 
+- Warning: Because updating will force your local repo to become identical to the remote (github) repo, this will overwrite any changes or additions you made locally. So make sure to backup your local repo if you want to preserve them.
 
 ## Usage 
 Note : Tensorflow GPU warnings are suppressed. Unsuppress them by commenting out the `logging.getLogger('tensorflow').setLevel(logging.FATAL)` at the beggining of `dropfind.py`.
@@ -46,9 +49,11 @@ E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
 There may be cases where you want to terminate the program prematurely (i.e. before `-n` images have been processed) and cannot interrupt via the command line. To solve this, the script will monitor the directory specified by `-p` for a file named `stop.txt`. If `stop.txt` is detected, dropfind will terminate even if it is expecting more images. An acknowledgement `exit.txt` will be saved to the same directory so the user can verify that the script terminated. Note that directory is not deleted, so that must be handled by the user. 
 
 ### Logging
-To help debugging when console output is muted, dropfind will write logs to `dropfind_log.txt` within the directory containing the script (`dropfind.py`). 
+To facilitate debugging when console output is muted, dropfind will write logs to `dropfind_log.txt` within the directory containing the script (`dropfind.py`). 
 Each time the script is executed, it will write script arguments, images it has performed inference on, and other information to `dropfind_log.txt`.
 Each script execution will be demarcated by a line of dashes within the log. To manage space, if `dropfind_log.txt`exceeds 500 lines before starting a new script execution, it will erase its contents and start over. 
+
+In the case of exceptions raised during script execution, dropfind will write the exception and metadata to both `dropfind_log.txt` and `dropfind_errors.txt`. Unlike `dropfind_log.txt`, `dropfind_errors.txt` will not be automatically refreshed.
 
 
 

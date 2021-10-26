@@ -68,7 +68,6 @@ if tf_version.is_tf2():
   from object_detection.predictors import rfcn_keras_box_predictor
   if sys.version_info[0] >= 3:
     from object_detection.models import ssd_efficientnet_bifpn_feature_extractor as ssd_efficientnet_bifpn
-
 if tf_version.is_tf1():
   from object_detection.models import faster_rcnn_inception_resnet_v2_feature_extractor as frcnn_inc_res
   from object_detection.models import faster_rcnn_inception_v2_feature_extractor as frcnn_inc_v2

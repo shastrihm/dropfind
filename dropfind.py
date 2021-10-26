@@ -20,6 +20,7 @@ import time
 from dir_watcher import DirWatcher
 import sys # importyng sys in order to access scripts located in a different folder
 import traceback
+import datetime
 
 path2scripts = 'research/' # TODO: provide pass to the research folder
 sys.path.insert(0, path2scripts) # making scripts in models/research available for import
@@ -311,10 +312,12 @@ if __name__ == "__main__":
                     break
                 for f in files:
                     n += 1
+                    CURR_FILE = f
                     dropfind(dir_path, f)
                     printcf(str(n) + " Done - " + f)
                 time.sleep(INTERVAL)
 
+            CURR_FILE = "Had finished inference on all images"
 
             new_fname = dir_path + os.sep + barcode + ".csv"
             os.rename(dir_path + os.sep + "temp.csv", new_fname)
@@ -331,7 +334,20 @@ if __name__ == "__main__":
         with open("dropfind_log.txt", "a") as log_file:
             log_file.write("---------------------------" +"\n")
     except:
-        with open("dropfind_log.txt", "a") as logfile:
+        error_log = "dropfind_errors.txt"
+        process_log = "dropfind_log.txt"
+        with open(process_log, "a") as logfile:
+            traceback.print_exc(file=logfile)
+            logfile.write("----------------------------" + "\n")
+        with open(error_log, "a") as logfile:
+            logfile.write("Monitored Directory: " + dir_path + "\n")
+            logfile.write("Date and Time: " + datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
+            try:
+                CURR_FILE = CURR_FILE
+            except NameError:
+                CURR_FILE = "Had not started inference on images yet"
+
+            logfile.write("Error on filename: " + CURR_FILE + "\n") 
             traceback.print_exc(file=logfile)
             logfile.write("----------------------------" + "\n")
         raise 

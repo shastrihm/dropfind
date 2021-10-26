@@ -32,7 +32,6 @@ from object_detection.utils import tf_version
 # pylint: disable=g-import-not-at-top
 if tf_version.is_tf2():
   from official.vision.image_classification.efficientnet import efficientnet_model
-
 _EFFICIENTNET_LEVEL_ENDPOINTS = {
     1: 'stack_0/block_0/project_bn',
     2: 'stack_1/block_1/add',

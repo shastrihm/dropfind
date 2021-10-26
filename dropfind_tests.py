@@ -7,7 +7,6 @@ dropfind_tests.py
 """
 import os, shutil
 import time
-import random 
 import csv
 import argparse 
 
@@ -172,7 +171,7 @@ def test_stop(interval=1.6):
 	User.reset()
 	time.sleep(DF_CATCHUP)
 	i = 0
-	stop_at = random.randint(0,len(os.listdir(WITHDRAW_DIR))-2)
+	stop_at = len(os.listdir(WITHDRAW_DIR))//2
 	for i in range(len(os.listdir(WITHDRAW_DIR))):
 		User.move()
 		time.sleep(interval)
