@@ -210,12 +210,12 @@ def center_coords(image_path):
             highest confidence
             If no drop identified, returns the center of the image by default
     """
-    im = Image.open(image_path)
-    # try:
-    #     im = Image.open(image_path)
-    # except PIL.UnidentifiedImageError:
-    #     im = Image.open(image_path)
-    #     print_console_and_file("Originally PIL.UnidentifiedImageError, Tried again and it worked", file=log_file)
+    try:
+        im = Image.open(image_path)
+    except PIL.UnidentifiedImageError:
+        time.sleep(5)
+        im = Image.open(image_path)
+        
 
     X_DIM, Y_DIM = im.size
     detections = inference_as_raw_output(image_path)
