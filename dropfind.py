@@ -266,90 +266,92 @@ if __name__ == "__main__":
     NUM_IMS = args.num_ims
     barcode = args.barcode
     mute = args.mute
-
-    printcf = lambda string : print_console_and_file(string, file = "dropfind_log.txt", mute = mute)
-
-    LOG_LIMIT = 500
-    log_file = open("dropfind_log.txt", "a")
-    num_lines = sum(1 for line in open("dropfind_log.txt"))
-    if num_lines > LOG_LIMIT:
-        log_file = open("dropfind_log.txt", "w")
-        printcf("dropfind_log.txt contains over " + str(LOG_LIMIT) + "lines. Clearing...")
+    if NUM_IMS == 0:
+        print("Imports successful")
     else:
+        printcf = lambda string : print_console_and_file(string, file = "dropfind_log.txt", mute = mute)
+
+        LOG_LIMIT = 500
         log_file = open("dropfind_log.txt", "a")
-    
-    log_file.write("Monitoring directory: " + dir_path + "\n")
-    log_file.write("Number of images expected: " + str(NUM_IMS) + "\n")
-    log_file.write("Barcode: " + barcode + "\n")
+        num_lines = sum(1 for line in open("dropfind_log.txt"))
+        if num_lines > LOG_LIMIT:
+            log_file = open("dropfind_log.txt", "w")
+            printcf("dropfind_log.txt contains over " + str(LOG_LIMIT) + "lines. Clearing...")
+        else:
+            log_file = open("dropfind_log.txt", "a")
+        
+        log_file.write("Monitoring directory: " + dir_path + "\n")
+        log_file.write("Number of images expected: " + str(NUM_IMS) + "\n")
+        log_file.write("Barcode: " + barcode + "\n")
 
-    log_file.close()
+        log_file.close()
 
-    
-    try:
-        dirwait_timeout = 60
-        x = 0
-        dirwait_interval = 5
-        DIR_FOUND_FLAG = True
-        while DIR_FOUND_FLAG and not os.path.isdir(dir_path):
-            printcf("Waiting for directory " + dir_path + " to be created...")
-            time.sleep(dirwait_interval)
-            x += dirwait_interval
-            if x >= dirwait_timeout:
-                printcf("Timeout. Directory " + dir_path + " not found after " + str(dirwait_timeout) + " seconds. Quitting..." )
-                DIR_FOUND_FLAG = False
+        
+        try:
+            dirwait_timeout = 60
+            x = 0
+            dirwait_interval = 5
+            DIR_FOUND_FLAG = True
+            while DIR_FOUND_FLAG and not os.path.isdir(dir_path):
+                printcf("Waiting for directory " + dir_path + " to be created...")
+                time.sleep(dirwait_interval)
+                x += dirwait_interval
+                if x >= dirwait_timeout:
+                    printcf("Timeout. Directory " + dir_path + " not found after " + str(dirwait_timeout) + " seconds. Quitting..." )
+                    DIR_FOUND_FLAG = False
 
-        if DIR_FOUND_FLAG:
-            Watcher = DirWatcher(dir_path)
-            INTERVAL = 1 # interval (in seconds) between refreshing directory for new images
+            if DIR_FOUND_FLAG:
+                Watcher = DirWatcher(dir_path)
+                INTERVAL = 1 # interval (in seconds) between refreshing directory for new images
 
-            printcf("Directory " + dir_path + " found")
-            printcf("Ready for inference...")
-            n = 0
-            while Watcher.count() < NUM_IMS:
-                files = Watcher.refresh_dir()
-                if Watcher.is_stop():
-                    printcf("stop.txt detected. Quitting prematurely...")
-                    break
-                for f in files:
-                    n += 1
-                    CURR_FILE = f
-                    dropfind(dir_path, f)
-                    printcf(str(n) + " Done - " + f)
-                time.sleep(INTERVAL)
+                printcf("Directory " + dir_path + " found")
+                printcf("Ready for inference...")
+                n = 0
+                while Watcher.count() < NUM_IMS:
+                    files = Watcher.refresh_dir()
+                    if Watcher.is_stop():
+                        printcf("stop.txt detected. Quitting prematurely...")
+                        break
+                    for f in files:
+                        n += 1
+                        CURR_FILE = f
+                        dropfind(dir_path, f)
+                        printcf(str(n) + " Done - " + f)
+                    time.sleep(INTERVAL)
 
-            CURR_FILE = "Had finished inference on all images"
+                CURR_FILE = "Had finished inference on all images"
 
-            new_fname = dir_path + os.sep + barcode + ".csv"
-            os.rename(dir_path + os.sep + "temp.csv", new_fname)
-            printcf("Renamed temp.csv to " + barcode + ".csv")
+                new_fname = dir_path + os.sep + barcode + ".csv"
+                os.rename(dir_path + os.sep + "temp.csv", new_fname)
+                printcf("Renamed temp.csv to " + barcode + ".csv")
 
-            with open(dir_path + os.sep + "exit.txt", 'w') as f:
-                f.write("exit acknowledgement")
-            printcf("Deposited exit.txt acknowledgement to " + dir_path)
+                with open(dir_path + os.sep + "exit.txt", 'w') as f:
+                    f.write("exit acknowledgement")
+                printcf("Deposited exit.txt acknowledgement to " + dir_path)
 
-            Watcher.refresh_dir()
-            assert(Watcher.is_exit())
-            printcf("Quitting...")
+                Watcher.refresh_dir()
+                assert(Watcher.is_exit())
+                printcf("Quitting...")
 
-        with open("dropfind_log.txt", "a") as log_file:
-            log_file.write("---------------------------" +"\n")
-    except:
-        error_log = "dropfind_errors.txt"
-        process_log = "dropfind_log.txt"
-        with open(process_log, "a") as logfile:
-            traceback.print_exc(file=logfile)
-            logfile.write("----------------------------" + "\n")
-        with open(error_log, "a") as logfile:
-            logfile.write("Monitored Directory: " + dir_path + "\n")
-            logfile.write("Date and Time: " + datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
-            try:
-                CURR_FILE = CURR_FILE
-            except NameError:
-                CURR_FILE = "Had not started inference on images yet"
+            with open("dropfind_log.txt", "a") as log_file:
+                log_file.write("---------------------------" +"\n")
+        except:
+            error_log = "dropfind_errors.txt"
+            process_log = "dropfind_log.txt"
+            with open(process_log, "a") as logfile:
+                traceback.print_exc(file=logfile)
+                logfile.write("----------------------------" + "\n")
+            with open(error_log, "a") as logfile:
+                logfile.write("Monitored Directory: " + dir_path + "\n")
+                logfile.write("Date and Time: " + datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S") + "\n")
+                try:
+                    CURR_FILE = CURR_FILE
+                except NameError:
+                    CURR_FILE = "Had not started inference on images yet"
 
-            logfile.write("Error on filename: " + CURR_FILE + "\n") 
-            traceback.print_exc(file=logfile)
-            logfile.write("----------------------------" + "\n")
-        raise 
-    
+                logfile.write("Error on filename: " + CURR_FILE + "\n") 
+                traceback.print_exc(file=logfile)
+                logfile.write("----------------------------" + "\n")
+            raise 
+        
 

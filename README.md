@@ -16,8 +16,8 @@ Made for LabVIEW integration on Windows.
 4) In the command line, from the directory that you cloned it to, run `setup.bat`. This should install all the required dependencies for running the inference script.
 
 ## Testing your installation
-
-Run `test.bat` from the directory you cloned the repo to and wait for it to complete. It may take a few minutes. If the installation was successful, no errors will be thrown and the message `Test passed` will be printed to the console for each test. As well as testing basic installation, the testing suite (implemented in `dropfind_tests.py`) verifies correct behavior from dropfind in various deployment scenarios.
+1) Run `test_imports.bat` to check if the required dependencies can be imported without error. If so, you will see a message `Imports successful` printed to the console.
+2) Run `test.bat` to test functionality. It may take a few minutes. If the installation was successful, no errors will be thrown and the message `Test passed` will be printed to the console for each test. As well as testing basic installation, the testing suite (implemented in `dropfind_tests.py`) verifies correct behavior from dropfind in various deployment scenarios.
 
 ## Updating
 If this GitHub repository is more up-to-date than your local repo, and you would like to update it: from the directory where you cloned this repo to, run the command `sh update.sh` in **Git Bash** (not Windows command line, unless you have taken special steps to ensure you can run shell scripts from the windows command line). 
