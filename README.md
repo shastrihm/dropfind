@@ -1,26 +1,38 @@
 # Object detection for crystallization drops
 Real time inference for a drop center detecting deep learning model trained with the Tensorflow2 object detection API. 
-Made for LabVIEW integration on Windows. 
+Developed for LabVIEW integration on Windows. 
+
+<p float="left">
+	<img src="assets/dropfind_1.jpg" width="250" height="250"/>
+	<img src="assets/dropfind_2.jpg" width="250" height="250"/>
+	<img src="assets/dropfind_5.jpg" width="250" height="250"/>
+</p>
+<p float="left">
+	<img src="assets/dropfind_3.jpg" width="250" height="250"/>
+	<img src="assets/dropfind_4.jpg" width="250" height="250"/>
+	<img src="assets/dropfind_6.jpg" width="250" height="250"/>
+</p>
+The center of each drop is calculated to be the center of its detection box.
 
 ## Requirements
 - Windows OS 
-- Python 3.6 (may work with newer Python versions, but this has not been tested)
+- Python 3.6+
 - Internet connection
-- Git Bash (for git commands. Not necessary but makes things a lot easier.)
+- Command line capable of running git and shell commands (e.g. Git Bash. Not necessary, but makes things a lot easier.)
 
 ## How to install
 1) Download and install Python 3.6. There are many ways to do this. The most straightforward way may be to download the installer by clicking [here](https://www.python.org/ftp/python/3.6.2/python-3.6.2-amd64.exe). Open it and follow the on screen instructions until it says the installation is successfull. 
     - After installing, running `python` in the command line may not work. If this is the case, you may need to add Python to your environment variables. To do this, rerun the installer and select **Modify -> Next**, then check the box that says "Add Python to environment variables", and then click Install.
 2) Download and install Microsoft Visual Studio [here](https://c2rsetup.officeapps.live.com/c2r/downloadVS.aspx?sku=community&channel=release&source=vslandingpage&cid=2011) if you don't already have a copy installed. When following the installer instructions, select "Desktop development with C++" as a workload to install. 
 3) Clone this repository to your machine by running `git clone https://github.com/shastrihm/dropfind.git`  from your desired directory in Git Bash.
-4) In the command line, from the directory that you cloned it to, run `setup.bat`. This should install all the required dependencies for running the inference script.
+4) Run `setup.bat`. This should install all the required dependencies for running the inference script.
 
 ## Testing your installation
 1) Run `test_imports.bat` to check if the required dependencies can be imported without error. If so, you will see a message `Imports successful` printed to the console.
 2) Run `test.bat` to test functionality. It may take a few minutes. If the installation was successful, no errors will be thrown and the message `Test passed` will be printed to the console for each test. As well as testing basic installation, the testing suite (implemented in `dropfind_tests.py`) verifies correct behavior from dropfind in various deployment scenarios.
 
 ## Updating
-If this GitHub repository is more up-to-date than your local repo, and you would like to update it: from the directory where you cloned this repo to, run the command `sh update.sh` in **Git Bash** (not Windows command line, unless you have taken special steps to ensure you can run shell scripts from the windows command line). 
+If this GitHub repository is more up-to-date than your local repo, and you would like to update it: run `update.sh`. 
 - Warning: Because updating will force your local repo to become identical to the remote (github) repo, this will overwrite any changes or additions you made locally. So make sure to backup your local repo if you want to preserve them.
 
 ## Usage 
