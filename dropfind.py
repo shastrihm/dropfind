@@ -44,8 +44,8 @@ os.environ["CUDA_VISIBLE_DEVICES"]="0" # TODO: specify your computational device
 
 
 # TODO: specify two pathes: to the pipeline.config file and to the folder with trained model.
-path2config ='themodel/v3/pipeline.config'
-path2model = 'themodel/v3/checkpoint'
+path2config ='themodel/v5/pipeline.config'
+path2model = 'themodel/v5/checkpoint'
 
 
 # do not change anything in this cell
@@ -56,7 +56,7 @@ detection_model = model_builder.build(model_config=model_config, is_training=Fal
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
 ckpt.restore(os.path.join(path2model, 'ckpt-0')).expect_partial()
 
-path2label_map = 'themodel/v3/label_map.pbtxt' # TODO: provide a path to the label map file
+path2label_map = 'themodel/v5/label_map.pbtxt' # TODO: provide a path to the label map file
 category_index = label_map_util.create_category_index_from_labelmap(path2label_map,use_display_name=True)
 
 
