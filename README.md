@@ -51,10 +51,10 @@ E.g. `python dropfind.py -p "C:\Path\To\Images" -n 42 -b "J000597" -m False`
 
 `C:\Path\To\Images\J000597.csv`
      
-| image1.jpg | (x,y) coordinates of inferred drop center for image1 |
-|------------|------------------------------------------------------|
-| . . .      | . . .                                                |
-| image42.jpg | (x,y) coordinates of inferred drop center for image42 |      
+| image1.jpg | (x,y) coordinates of inferred drop center for image1 | (x,y) coordinates of top left of bounding box for image 1 |
+|------------|------------------------------------------------------|---------------------------------------------------------- |
+| . . .      | . . .                                                | . . .                                                     |
+| image42.jpg | (x,y) coordinates of inferred drop center for image42 | (x,y) coordinates of top left of bounding box for image 42 |      
 
 
 ### Quitting dropfind prematurely

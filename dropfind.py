@@ -207,7 +207,7 @@ def center_coords(image_path):
     image_path : (str) path to image for inference
 
     Returns the coordinates (x,y) of the center of the drop with the 
-            highest confidence
+            highest confidence, as well as the coordinates of the top left of the box
             If no drop identified, returns the center of the image by default
     """
     try:
@@ -223,7 +223,9 @@ def center_coords(image_path):
     scores = detections['detection_scores']
     classes = detections['detection_classes']
     if len(boxes) == 0:
-        return (X_DIM//2, Y_DIM//2)
+        topleft = (0,0)
+        center = (X_DIM//2, Y_DIM//2)
+        return {"topleft": topleft, "center": center}
     ind = scores.index(max(scores))
     box = boxes[ind] 
     # box is numpy array [y1, x1, y2, x2] where (x1,y1) are top left corner 
@@ -234,8 +236,10 @@ def center_coords(image_path):
     x1 = box[1]*X_DIM
     y2 = box[2]*Y_DIM
     x2 = box[3]*X_DIM
-    result = (round(x1 + (x2 - x1)//2, 3), round(y1 + (y2 - y1)//2, 3))
-    return result
+
+    topleft = (x1, y1)
+    center = (round(x1 + (x2 - x1)//2, 3), round(y1 + (y2 - y1)//2, 3))
+    return {"topleft": topleft, "center": center}
 
 def dropfind(dir_path, image):
     """
@@ -247,7 +251,10 @@ def dropfind(dir_path, image):
     """
     with open(dir_path + os.sep + "temp.csv", "a", newline='') as f:
         writer = csv.writer(f)
-        writer.writerow([image, center_coords(dir_path + os.sep + image)])
+        d = center_coords(dir_path + os.sep + image)
+        center = d["center"]
+        topleft = d["topleft"]
+        writer.writerow([image, center, topleft])
 
 def print_console_and_file(string, file, mute):
     if not mute:
