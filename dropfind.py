@@ -237,8 +237,8 @@ def center_coords(image_path):
     y2 = box[2]*Y_DIM
     x2 = box[3]*X_DIM
 
-    topleft = (x1, y1)
-    center = (round(x1 + (x2 - x1)//2, 3), round(y1 + (y2 - y1)//2, 3))
+    topleft = (round(x1), round(y1))
+    center = (round(x1 + (x2 - x1)//2), round(y1 + (y2 - y1)//2))
     return {"topleft": topleft, "center": center}
 
 def dropfind(dir_path, image):
